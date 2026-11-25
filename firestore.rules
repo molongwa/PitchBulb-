@@ -1,0 +1,220 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global default deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidUserProfile(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 60 &&
+             data.accuracyPoints is int && data.accuracyPoints >= 0 && data.accuracyPoints <= 1000000 &&
+             data.totalPredictions is int && data.totalPredictions >= 0 && data.totalPredictions <= 100000 &&
+             data.correctPredictions is int && data.correctPredictions >= 0 && data.correctPredictions <= 100000 &&
+             data.currentStreak is int && data.currentStreak >= 0 && data.currentStreak <= 10000 &&
+             data.adBoostTokens is int && data.adBoostTokens >= 0 && data.adBoostTokens <= 1000 &&
+             data.notificationsEnabled is bool &&
+             data.goalAlertsEnabled is bool &&
+             data.kickoffAlertsEnabled is bool &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidMatchPrediction(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.matchId is string && isValidId(data.matchId) &&
+             data.leagueCode is string && data.leagueCode.size() >= 1 && data.leagueCode.size() <= 64 &&
+             data.leagueName is string && data.leagueName.size() >= 1 && data.leagueName.size() <= 100 &&
+             data.homeTeam is string && data.homeTeam.size() >= 1 && data.homeTeam.size() <= 100 &&
+             data.awayTeam is string && data.awayTeam.size() >= 1 && data.awayTeam.size() <= 100 &&
+             (!('homeLogoUrl' in data) || (data.homeLogoUrl is string && data.homeLogoUrl.size() <= 500)) &&
+             (!('awayLogoUrl' in data) || (data.awayLogoUrl is string && data.awayLogoUrl.size() <= 500)) &&
+             data.kickoffIso is string && data.kickoffIso.size() >= 1 && data.kickoffIso.size() <= 64 &&
+             data.pick in ['HOME', 'DRAW', 'AWAY'] &&
+             data.predictedHomeScore is int && data.predictedHomeScore >= 0 && data.predictedHomeScore <= 20 &&
+             data.predictedAwayScore is int && data.predictedAwayScore >= 0 && data.predictedAwayScore <= 20 &&
+             data.confidence in ['STANDARD', 'HIGH', 'BOOSTED'] &&
+             data.status in ['PENDING', 'WON', 'LOST'] &&
+             data.pointsAwarded is int && data.pointsAwarded >= 0 && data.pointsAwarded <= 100 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidMatchSubscription(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.matchId is string && isValidId(data.matchId) &&
+             data.leagueCode is string && data.leagueCode.size() >= 1 && data.leagueCode.size() <= 64 &&
+             data.homeTeam is string && data.homeTeam.size() >= 1 && data.homeTeam.size() <= 100 &&
+             data.awayTeam is string && data.awayTeam.size() >= 1 && data.awayTeam.size() <= 100 &&
+             data.lastKnownHomeScore is int && data.lastKnownHomeScore >= 0 && data.lastKnownHomeScore <= 50 &&
+             data.lastKnownAwayScore is int && data.lastKnownAwayScore >= 0 && data.lastKnownAwayScore <= 50 &&
+             data.lastKnownStatus is string && data.lastKnownStatus.size() >= 1 && data.lastKnownStatus.size() <= 32 &&
+             data.notifyGoals is bool &&
+             data.notifyKickoff is bool &&
+             data.notifyFullTime is bool &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    match /users/{userId} {
+      allow get: if isValidId(userId) && isOwner(userId);
+      allow list: if isOwner(userId);
+
+      allow create: if isValidId(userId) &&
+                       isOwner(userId) &&
+                       incoming().userId == request.auth.uid &&
+                       incoming().keys().hasAll([
+                         'userId', 'displayName', 'accuracyPoints', 'totalPredictions',
+                         'correctPredictions', 'currentStreak', 'adBoostTokens',
+                         'notificationsEnabled', 'goalAlertsEnabled', 'kickoffAlertsEnabled',
+                         'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'displayName', 'accuracyPoints', 'totalPredictions',
+                         'correctPredictions', 'currentStreak', 'adBoostTokens',
+                         'notificationsEnabled', 'goalAlertsEnabled', 'kickoffAlertsEnabled',
+                         'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidUserProfile(incoming());
+
+      allow update: if isValidId(userId) &&
+                       isOwner(userId) &&
+                       isValidUserProfile(incoming()) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       (
+                         // Action: Update notification settings or display name
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'displayName', 'notificationsEnabled', 'goalAlertsEnabled',
+                           'kickoffAlertsEnabled', 'updatedAt'
+                         ]) ||
+                         // Action: Update prediction stats or ad boost tokens
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'accuracyPoints', 'totalPredictions', 'correctPredictions',
+                           'currentStreak', 'adBoostTokens', 'updatedAt'
+                         ])
+                       );
+
+      allow delete: if isValidId(userId) && isOwner(userId);
+
+      match /predictions/{predictionId} {
+        allow get: if isValidId(userId) && isValidId(predictionId) && isOwner(userId);
+        allow list: if isOwner(userId);
+
+        allow create: if isValidId(userId) &&
+                         isValidId(predictionId) &&
+                         isOwner(userId) &&
+                         incoming().userId == request.auth.uid &&
+                         incoming().status == 'PENDING' &&
+                         incoming().pointsAwarded == 0 &&
+                         incoming().keys().hasAll([
+                           'userId', 'matchId', 'leagueCode', 'leagueName',
+                           'homeTeam', 'awayTeam', 'kickoffIso', 'pick',
+                           'predictedHomeScore', 'predictedAwayScore', 'confidence',
+                           'status', 'pointsAwarded', 'createdAt', 'updatedAt'
+                         ]) &&
+                         incoming().keys().hasOnly([
+                           'userId', 'matchId', 'leagueCode', 'leagueName',
+                           'homeTeam', 'awayTeam', 'homeLogoUrl', 'awayLogoUrl',
+                           'kickoffIso', 'pick', 'predictedHomeScore', 'predictedAwayScore',
+                           'confidence', 'status', 'pointsAwarded', 'createdAt', 'updatedAt'
+                         ]) &&
+                         isValidMatchPrediction(incoming());
+
+        allow update: if isValidId(userId) &&
+                         isValidId(predictionId) &&
+                         isOwner(userId) &&
+                         isValidMatchPrediction(incoming()) &&
+                         incoming().userId == existing().userId &&
+                         incoming().matchId == existing().matchId &&
+                         incoming().createdAt == existing().createdAt &&
+                         existing().status == 'PENDING' &&
+                         (
+                           // Action: Edit pending prediction
+                           (
+                             incoming().status == 'PENDING' &&
+                             incoming().pointsAwarded == 0 &&
+                             incoming().diff(existing()).affectedKeys().hasOnly([
+                               'pick', 'predictedHomeScore', 'predictedAwayScore',
+                               'confidence', 'updatedAt'
+                             ])
+                           ) ||
+                           // Action: Settle prediction when match finishes (terminal state transition)
+                           (
+                             incoming().status in ['WON', 'LOST'] &&
+                             incoming().diff(existing()).affectedKeys().hasOnly([
+                               'status', 'pointsAwarded', 'updatedAt'
+                             ])
+                           )
+                         );
+
+        allow delete: if isValidId(userId) && isValidId(predictionId) && isOwner(userId);
+      }
+
+      match /subscriptions/{matchId} {
+        allow get: if isValidId(userId) && isValidId(matchId) && isOwner(userId);
+        allow list: if isOwner(userId);
+
+        allow create: if isValidId(userId) &&
+                         isValidId(matchId) &&
+                         isOwner(userId) &&
+                         incoming().userId == request.auth.uid &&
+                         incoming().matchId == matchId &&
+                         incoming().keys().hasAll([
+                           'userId', 'matchId', 'leagueCode', 'homeTeam', 'awayTeam',
+                           'lastKnownHomeScore', 'lastKnownAwayScore', 'lastKnownStatus',
+                           'notifyGoals', 'notifyKickoff', 'notifyFullTime',
+                           'createdAt', 'updatedAt'
+                         ]) &&
+                         incoming().keys().hasOnly([
+                           'userId', 'matchId', 'leagueCode', 'homeTeam', 'awayTeam',
+                           'lastKnownHomeScore', 'lastKnownAwayScore', 'lastKnownStatus',
+                           'notifyGoals', 'notifyKickoff', 'notifyFullTime',
+                           'createdAt', 'updatedAt'
+                         ]) &&
+                         isValidMatchSubscription(incoming());
+
+        allow update: if isValidId(userId) &&
+                         isValidId(matchId) &&
+                         isOwner(userId) &&
+                         isValidMatchSubscription(incoming()) &&
+                         incoming().userId == existing().userId &&
+                         incoming().matchId == existing().matchId &&
+                         incoming().createdAt == existing().createdAt &&
+                         (
+                           // Action: Update alert toggles
+                           incoming().diff(existing()).affectedKeys().hasOnly([
+                             'notifyGoals', 'notifyKickoff', 'notifyFullTime', 'updatedAt'
+                           ]) ||
+                           // Action: Sync last known score/status for diff alerts
+                           incoming().diff(existing()).affectedKeys().hasOnly([
+                             'lastKnownHomeScore', 'lastKnownAwayScore', 'lastKnownStatus', 'updatedAt'
+                           ])
+                         );
+
+        allow delete: if isValidId(userId) && isValidId(matchId) && isOwner(userId);
+      }
+    }
+  }
+}

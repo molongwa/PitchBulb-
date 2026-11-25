@@ -1,0 +1,38 @@
+<resources>
+    <string name="app_name">PitchBulb</string>
+
+    <!-- AdMob Configuration: Official Google Mobile Ads Test IDs.
+         Replace with your live AdMob App ID and Ad Unit IDs from admob.google.com before publishing to Google Play. -->
+    <string name="admob_app_id" translatable="false">ca-app-pub-3940256099942544~3347511713</string>
+    <string name="admob_banner_unit_id" translatable="false">ca-app-pub-3940256099942544/6300978111</string>
+    <string name="admob_interstitial_unit_id" translatable="false">ca-app-pub-3940256099942544/1033173712</string>
+    <string name="admob_rewarded_unit_id" translatable="false">ca-app-pub-3940256099942544/5224354917</string>
+
+    <!-- Notification Channels -->
+    <string name="channel_goals_id" translatable="false">pitchpulse_goals</string>
+    <string name="channel_goals_name">Live Goals &amp; Match Alerts</string>
+    <string name="channel_goals_desc">Real-time goals, kickoffs, full-time results, and prediction outcomes.</string>
+
+    <!-- Auth & Onboarding -->
+    <string name="auth_headline">Every Kickoff. Every Edge.</string>
+    <string name="auth_subtitle">Live scores, deep match stats, breaking soccer news, and precision predictions synced across devices.</string>
+    <string name="sign_in_google">Sign in with Google</string>
+
+    <!-- Navigation -->
+    <string name="nav_matches">Matches</string>
+    <string name="nav_news">News</string>
+    <string name="nav_predictions">Predict</string>
+    <string name="nav_leagues">Leagues</string>
+    <string name="nav_alerts">Alerts</string>
+
+    <!-- Common Actions & Labels -->
+    <string name="action_refresh">Refresh</string>
+    <string name="action_retry">Retry</string>
+    <string name="action_sign_out">Sign out</string>
+    <string name="label_live_now">LIVE</string>
+    <string name="label_boost_ad">Watch Ad for 2x Boost</string>
+    <string name="label_enable_notifications">Enable Match Notifications</string>
+    <string name="search_matches_placeholder">Search live matches by team...</string>
+    <string name="action_clear_search">Clear search</string>
+    <string name="search_icon_desc">Search teams</string>
+</resources>

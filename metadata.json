@@ -1,0 +1,6 @@
+{
+  "name": "PitchBulb",
+  "description": "Live soccer scores, match stats, news, fixtures, predictions, and real-time match alerts.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

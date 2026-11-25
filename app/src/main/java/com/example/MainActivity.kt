@@ -1,0 +1,24 @@
+package com.example
+
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import com.example.ads.AdMobManager
+import com.example.notifications.NotificationHelper
+import com.example.ui.navigation.AppNavigation
+import com.example.ui.theme.PitchPulseTheme
+
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+        NotificationHelper.ensureNotificationChannel(this)
+        AdMobManager.initialize(this)
+        setContent {
+            PitchPulseTheme {
+                AppNavigation()
+            }
+        }
+    }
+}

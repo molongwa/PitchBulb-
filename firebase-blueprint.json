@@ -1,0 +1,262 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User prediction stats and notification preferences.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Authenticated Firebase UID matching the document ID."
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Display name shown in the prediction hub."
+        },
+        "accuracyPoints": {
+          "type": "integer",
+          "description": "Total prediction points earned."
+        },
+        "totalPredictions": {
+          "type": "integer",
+          "description": "Total submitted predictions."
+        },
+        "correctPredictions": {
+          "type": "integer",
+          "description": "Total winning predictions."
+        },
+        "currentStreak": {
+          "type": "integer",
+          "description": "Current consecutive winning prediction streak."
+        },
+        "adBoostTokens": {
+          "type": "integer",
+          "description": "Rewarded Ad 2x prediction boost tokens."
+        },
+        "notificationsEnabled": {
+          "type": "boolean",
+          "description": "Global match notifications toggle."
+        },
+        "goalAlertsEnabled": {
+          "type": "boolean",
+          "description": "Real-time goal notifications toggle."
+        },
+        "kickoffAlertsEnabled": {
+          "type": "boolean",
+          "description": "Kickoff reminder notifications toggle."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when created (FieldValue.serverTimestamp())."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when updated (FieldValue.serverTimestamp())."
+        }
+      },
+      "required": [
+        "userId",
+        "displayName",
+        "accuracyPoints",
+        "totalPredictions",
+        "correctPredictions",
+        "currentStreak",
+        "adBoostTokens",
+        "notificationsEnabled",
+        "goalAlertsEnabled",
+        "kickoffAlertsEnabled",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "MatchPrediction": {
+      "title": "MatchPrediction",
+      "description": "A user's soccer match prediction stored under their user profile.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Owner UID."
+        },
+        "matchId": {
+          "type": "string",
+          "description": "External match event identifier."
+        },
+        "leagueCode": {
+          "type": "string",
+          "description": "League code such as eng.1 or uefa.champions."
+        },
+        "leagueName": {
+          "type": "string",
+          "description": "Human-readable league name."
+        },
+        "homeTeam": {
+          "type": "string",
+          "description": "Home club name."
+        },
+        "awayTeam": {
+          "type": "string",
+          "description": "Away club name."
+        },
+        "homeLogoUrl": {
+          "type": "string",
+          "description": "Optional home crest URL."
+        },
+        "awayLogoUrl": {
+          "type": "string",
+          "description": "Optional away crest URL."
+        },
+        "kickoffIso": {
+          "type": "string",
+          "description": "ISO-8601 kickoff timestamp string."
+        },
+        "pick": {
+          "type": "string",
+          "enum": ["HOME", "DRAW", "AWAY"],
+          "description": "Predicted match outcome."
+        },
+        "predictedHomeScore": {
+          "type": "integer",
+          "description": "Predicted home goals (0-20)."
+        },
+        "predictedAwayScore": {
+          "type": "integer",
+          "description": "Predicted away goals (0-20)."
+        },
+        "confidence": {
+          "type": "string",
+          "enum": ["STANDARD", "HIGH", "BOOSTED"],
+          "description": "Prediction confidence or 2x Ad Boost."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["PENDING", "WON", "LOST"],
+          "description": "Settlement status of prediction."
+        },
+        "pointsAwarded": {
+          "type": "integer",
+          "description": "Points awarded once settled."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp (FieldValue.serverTimestamp())."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp (FieldValue.serverTimestamp())."
+        }
+      },
+      "required": [
+        "userId",
+        "matchId",
+        "leagueCode",
+        "leagueName",
+        "homeTeam",
+        "awayTeam",
+        "kickoffIso",
+        "pick",
+        "predictedHomeScore",
+        "predictedAwayScore",
+        "confidence",
+        "status",
+        "pointsAwarded",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "MatchSubscription": {
+      "title": "MatchSubscription",
+      "description": "Followed match alert subscription for real-time score and kickoff notifications.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Owner UID."
+        },
+        "matchId": {
+          "type": "string",
+          "description": "External match event identifier."
+        },
+        "leagueCode": {
+          "type": "string",
+          "description": "League identifier."
+        },
+        "homeTeam": {
+          "type": "string",
+          "description": "Home club name."
+        },
+        "awayTeam": {
+          "type": "string",
+          "description": "Away club name."
+        },
+        "lastKnownHomeScore": {
+          "type": "integer",
+          "description": "Last seen home score for diff notification checks."
+        },
+        "lastKnownAwayScore": {
+          "type": "integer",
+          "description": "Last seen away score for diff notification checks."
+        },
+        "lastKnownStatus": {
+          "type": "string",
+          "description": "Last seen match state (PRE, LIVE, HT, FT)."
+        },
+        "notifyGoals": {
+          "type": "boolean",
+          "description": "Whether goal notifications are active for this match."
+        },
+        "notifyKickoff": {
+          "type": "boolean",
+          "description": "Whether kickoff notifications are active for this match."
+        },
+        "notifyFullTime": {
+          "type": "boolean",
+          "description": "Whether full-time notifications are active for this match."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp (FieldValue.serverTimestamp())."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp (FieldValue.serverTimestamp())."
+        }
+      },
+      "required": [
+        "userId",
+        "matchId",
+        "leagueCode",
+        "homeTeam",
+        "awayTeam",
+        "lastKnownHomeScore",
+        "lastKnownAwayScore",
+        "lastKnownStatus",
+        "notifyGoals",
+        "notifyKickoff",
+        "notifyFullTime",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "User profile document storing prediction stats and notification settings."
+    },
+    "/users/{userId}/predictions/{predictionId}": {
+      "schema": { "$ref": "#/entities/MatchPrediction" },
+      "description": "User-scoped match predictions keyed by matchId."
+    },
+    "/users/{userId}/subscriptions/{matchId}": {
+      "schema": { "$ref": "#/entities/MatchSubscription" },
+      "description": "User-scoped followed match notification subscriptions."
+    }
+  }
+}
